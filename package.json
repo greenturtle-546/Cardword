@@ -37,7 +37,8 @@
     "react-router-dom": "6.22.3",
     "react-timer-hook": "3.0.7",
     "uuid": "9.0.1",
-    "vaul": "^1.1.2"
+    "vaul": "^1.1.2",
+    "papaparse": "^5.4.1"
   },
   "scripts": {
     "start": "vite",
@@ -95,11 +96,12 @@
     "postcss-simple-vars": "7.0.1",
     "react-grab": "^0.1.18",
     "typescript": "5.5.2",
-    "vite": "5.2.13",
+    "vite": "5.2.163",
     "vite-plugin-checker": "0.6.4",
     "vite-plugin-pwa": "^1.2.0",
     "vite-tsconfig-paths": "4.3.2",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "@types/papaparse": "^5.3.14"
   },
   "packageManager": "pnpm@10.28.2"
 }
