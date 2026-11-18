@@ -42,27 +42,25 @@ export async function syncFromGoogleSheet(targetDeckId: string): Promise<{
   let added = 0;
   let updated = 0;
 
-  // Added db.decks to the transaction
   await db.transaction('rw', db.decks, db.notes, db.cards, async () => {
     
-    // 1. Auto-create the Deck folder if it doesn't exist yet
-    const existingDeck = await db.decks.get(targetDeckId);
+    // 1. Get the deck or create it
+    let existingDeck = await db.decks.get(targetDeckId);
     if (!existingDeck) {
-      await db.decks.put({
+      existingDeck = {
         id: targetDeckId,
         name: "Indonesian Vocab",
         cards: [],
         notes: [],
         subDecks: [],
         creationDate: new Date(),
-      } as any);
+      } as any;
     }
 
     // 2. Process the spreadsheet data
     for (const row of data) {
       const externalId = row.id?.trim();
       const front = row.en_word?.trim();
-      
       const back = row.category?.trim()
         ? `${row.fr_word?.trim()}<br><small>${row.category.trim()}</small>`
         : row.fr_word?.trim();
@@ -72,12 +70,7 @@ export async function syncFromGoogleSheet(targetDeckId: string): Promise<{
       const noteId = `sheet_note_${externalId}`;
       const cardId = `sheet_card_${externalId}`;
 
-      const noteContent = {
-        type: NoteType.Basic,
-        front: front,
-        back: back,
-      };
-
+      const noteContent = { type: NoteType.Basic, front, back };
       const existingNote = await db.notes.get(noteId);
 
       if (!existingNote) {
@@ -96,33 +89,27 @@ export async function syncFromGoogleSheet(targetDeckId: string): Promise<{
           deck: targetDeckId,
           creationDate: new Date(),
           history: [],
-          model: {
-            due: new Date(),
-            stability: 0,
-            difficulty: 0,
-            elapsed_days: 0,
-            scheduled_days: 0,
-            reps: 0,
-            lapses: 0,
-            state: 0,
-          },
+          model: { due: new Date(), stability: 0, difficulty: 0, elapsed_days: 0, scheduled_days: 0, reps: 0, lapses: 0, state: 0 },
           content: noteContent as any,
         } as any);
-
         added++;
       } else {
-        await db.notes.update(noteId, {
-          sortField: front,
-          content: noteContent as any,
-        });
-        
-        await db.cards.update(cardId, {
-          content: noteContent as any,
-        });
-
+        await db.notes.update(noteId, { sortField: front, content: noteContent as any });
+        await db.cards.update(cardId, { content: noteContent as any });
         updated++;
       }
+
+      // 3. TWO-WAY BINDING: Tell the deck that it owns this card and note
+      if (!existingDeck.notes.includes(noteId)) {
+        existingDeck.notes.push(noteId);
+      }
+      if (!existingDeck.cards.includes(cardId)) {
+        existingDeck.cards.push(cardId);
+      }
     }
+
+    // 4. Save the updated deck inventory back to the database
+    await db.decks.put(existingDeck);
   });
 
   return { added, updated };
