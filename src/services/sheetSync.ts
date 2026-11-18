@@ -2,6 +2,7 @@
 import Papa from 'papaparse';
 import { db } from '../logic/db';
 import { NoteType } from '../logic/note/note';
+import { createCardSkeleton } from '../logic/card/createCardSkeleton';
 
 export interface SheetRow {
   id: string;
@@ -39,17 +40,15 @@ export async function syncFromGoogleSheet(): Promise<{
   let updated = 0;
 
   await db.transaction('rw', db.decks, db.notes, db.cards, async () => {
-    
-    // 1. Grab existing decks or AUTO-CREATE one if the browser is empty
     const allDecks = await db.decks.toArray();
     let targetDeck;
     let targetDeckId;
 
     if (allDecks.length === 0) {
-      targetDeckId = "indonesian_vocab_deck";
+      targetDeckId = "french_vocab_deck";
       targetDeck = {
         id: targetDeckId,
-        name: "Belajar Bahasa Indonesia",
+        name: "Les mots Francais",
         cards: [],
         notes: [],
         subDecks: [],
@@ -58,9 +57,10 @@ export async function syncFromGoogleSheet(): Promise<{
     } else {
       targetDeck = allDecks[0]; 
       targetDeckId = targetDeck.id;
+      // Force update the name to French if it was previously Indonesian
+      targetDeck.name = "Les mots Francais";
     }
 
-    // 2. Process the CSV rows
     for (const row of data) {
       const externalId = row.id?.trim();
       const front = row.en_word?.trim();
@@ -86,15 +86,13 @@ export async function syncFromGoogleSheet(): Promise<{
           content: noteContent,
         });
 
-        await db.cards.put({
-          id: cardId,
-          note: noteId,
-          deck: targetDeckId,
-          creationDate: new Date(),
-          history: [],
-          model: { due: new Date(), stability: 0, difficulty: 0, elapsed_days: 0, scheduled_days: 0, reps: 0, lapses: 0, state: 0 },
-          content: noteContent,
-        });
+        // Use Skola's native skeleton so all FSRS dates are properly initialized
+        const newCard = createCardSkeleton(targetDeckId);
+        newCard.id = cardId;
+        newCard.note = noteId;
+        newCard.content = noteContent;
+
+        await db.cards.put(newCard);
         added++;
       } else {
         await db.notes.update(noteId, { sortField: front, content: noteContent });
@@ -102,7 +100,6 @@ export async function syncFromGoogleSheet(): Promise<{
         updated++;
       }
 
-      // 3. Link the cards directly to the deck
       if (!targetDeck.notes.includes(noteId)) {
         targetDeck.notes.push(noteId);
       }
@@ -111,7 +108,6 @@ export async function syncFromGoogleSheet(): Promise<{
       }
     }
 
-    // 4. Save the deck (creates it if new, updates it if existing)
     await db.decks.put(targetDeck);
   });
 
