@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { db } from '../db'; 
+import { db } from '../logic/db'; 
 
 export interface SheetRow {
   id: string;
