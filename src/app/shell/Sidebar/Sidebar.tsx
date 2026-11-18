@@ -2,6 +2,7 @@ import { CloudSyncState } from "@/components/CloudSyncState";
 import { IconButton } from "@/components/ui/IconButton";
 import { NavItem } from "@/components/ui/NavItem";
 import { breakpoints } from "@/lib/breakpoints";
+import { SyncButton } from "@/components/SyncButton";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 import {
   IconCards,
@@ -100,6 +101,7 @@ function Sidebar({ menuOpened, menuHandlers }: SidebarProps) {
               collapsed={minimalMode}
               onClick={fullscreenMode ? menuHandlers.close : undefined}
             />
+            <SyncButton /> {/* Add it right here! */}
             <NavItem
               label={t("settings.title")}
               path="/settings"

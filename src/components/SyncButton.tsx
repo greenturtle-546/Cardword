@@ -1,21 +1,20 @@
 import { useState } from 'react';
 import { syncFromGoogleSheet } from '../services/sheetSync';
+import { IconRefresh } from "@tabler/icons-react"; // Import an icon
 
-// 'deckId' is now optional so App.tsx doesn't break
 export function SyncButton({ deckId }: { deckId?: string }) { 
-  const [status, setStatus] = useState('Sync from Google Sheets');
+  const [status, setStatus] = useState('Sync Google Sheets');
 
   const handleSync = async () => {
     setStatus('Syncing...');
     try {
       const { added, updated } = await syncFromGoogleSheet();
-      setStatus(`Done! Added: ${added} | Updated: ${updated}`);
-      // Force reload so Skola updates the UI immediately
+      setStatus(`Done! (+${added}, ^${updated})`);
       setTimeout(() => window.location.reload(), 1500); 
     } catch (error: any) {
       console.error(error);
       setStatus(error.message || 'Sync Failed');
-      setTimeout(() => setStatus('Sync from Google Sheets'), 3000);
+      setTimeout(() => setStatus('Sync Google Sheets'), 3000);
     }
   };
 
@@ -23,12 +22,24 @@ export function SyncButton({ deckId }: { deckId?: string }) {
     <button 
       onClick={handleSync} 
       style={{ 
-        position: 'fixed', bottom: '24px', right: '24px', zIndex: 99999, 
-        padding: '16px 24px', background: '#4F46E5', color: 'white', 
-        borderRadius: '50px', fontWeight: 'bold', border: 'none',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.3)', cursor: 'pointer'
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        width: '100%',
+        padding: '10px 12px', 
+        background: 'transparent', 
+        color: 'var(--text-color)', // Matches Skola's theme
+        borderRadius: '8px',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '14px',
+        textAlign: 'left',
+        marginTop: 'auto' // Pushes it to the bottom of the sidebar
       }}
+      onMouseOver={(e) => e.currentTarget.style.background = 'var(--hover-bg)'}
+      onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
     >
+      <IconRefresh size={18} />
       {status}
     </button>
   );
