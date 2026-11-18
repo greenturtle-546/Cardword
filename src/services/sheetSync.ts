@@ -40,16 +40,27 @@ export async function syncFromGoogleSheet(): Promise<{
 
   await db.transaction('rw', db.decks, db.notes, db.cards, async () => {
     
-    // 1. Grab the ACTUAL deck you created in the Skola UI
+    // 1. Grab existing decks or AUTO-CREATE one if the browser is empty
     const allDecks = await db.decks.toArray();
-    if (allDecks.length === 0) {
-      throw new Error("Create a deck in Skola first!");
-    }
-    
-    // 2. Automatically sync to your first deck (Indonesian Vocab)
-    const targetDeck = allDecks[0]; 
-    const targetDeckId = targetDeck.id;
+    let targetDeck;
+    let targetDeckId;
 
+    if (allDecks.length === 0) {
+      targetDeckId = "indonesian_vocab_deck";
+      targetDeck = {
+        id: targetDeckId,
+        name: "Belajar Bahasa Indonesia",
+        cards: [],
+        notes: [],
+        subDecks: [],
+        creationDate: new Date(),
+      };
+    } else {
+      targetDeck = allDecks[0]; 
+      targetDeckId = targetDeck.id;
+    }
+
+    // 2. Process the CSV rows
     for (const row of data) {
       const externalId = row.id?.trim();
       const front = row.en_word?.trim();
@@ -91,7 +102,7 @@ export async function syncFromGoogleSheet(): Promise<{
         updated++;
       }
 
-      // 3. Link the cards directly to your Indonesian Vocab deck
+      // 3. Link the cards directly to the deck
       if (!targetDeck.notes.includes(noteId)) {
         targetDeck.notes.push(noteId);
       }
@@ -100,6 +111,7 @@ export async function syncFromGoogleSheet(): Promise<{
       }
     }
 
+    // 4. Save the deck (creates it if new, updates it if existing)
     await db.decks.put(targetDeck);
   });
 
