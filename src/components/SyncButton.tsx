@@ -12,14 +12,28 @@ export function SyncButton({ deckId }: { deckId: string }) {
       setTimeout(() => setStatus('Sync from Google Sheets'), 3000);
     } catch (error) {
       console.error(error);
-      setStatus('Sync Failed');
+      setStatus('Sync Failed (Check Console)');
+      setTimeout(() => setStatus('Sync from Google Sheets'), 3000);
     }
   };
 
   return (
     <button 
       onClick={handleSync} 
-      style={{ padding: '12px', background: '#4F46E5', color: 'white', borderRadius: '8px', width: '100%', margin: '10px 0', fontWeight: 'bold', border: 'none' }}
+      style={{ 
+        position: 'fixed', 
+        bottom: '24px', 
+        right: '24px', 
+        zIndex: 99999, 
+        padding: '16px 24px', 
+        background: '#4F46E5', 
+        color: 'white', 
+        borderRadius: '50px', 
+        fontWeight: 'bold', 
+        border: 'none',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        cursor: 'pointer'
+      }}
     >
       {status}
     </button>

@@ -42,8 +42,23 @@ export async function syncFromGoogleSheet(targetDeckId: string): Promise<{
   let added = 0;
   let updated = 0;
 
-  // We must write to both the notes and cards tables simultaneously
-  await db.transaction('rw', db.notes, db.cards, async () => {
+  // Added db.decks to the transaction
+  await db.transaction('rw', db.decks, db.notes, db.cards, async () => {
+    
+    // 1. Auto-create the Deck folder if it doesn't exist yet
+    const existingDeck = await db.decks.get(targetDeckId);
+    if (!existingDeck) {
+      await db.decks.put({
+        id: targetDeckId,
+        name: "Indonesian Vocab",
+        cards: [],
+        notes: [],
+        subDecks: [],
+        creationDate: new Date(),
+      } as any);
+    }
+
+    // 2. Process the spreadsheet data
     for (const row of data) {
       const externalId = row.id?.trim();
       const front = row.en_word?.trim();
@@ -57,7 +72,6 @@ export async function syncFromGoogleSheet(targetDeckId: string): Promise<{
       const noteId = `sheet_note_${externalId}`;
       const cardId = `sheet_card_${externalId}`;
 
-      // This perfectly matches Skola's expected Basic Note content structure
       const noteContent = {
         type: NoteType.Basic,
         front: front,
@@ -67,7 +81,6 @@ export async function syncFromGoogleSheet(targetDeckId: string): Promise<{
       const existingNote = await db.notes.get(noteId);
 
       if (!existingNote) {
-        // 1. Create the Note (holds the text)
         await db.notes.put({
           id: noteId,
           deck: targetDeckId,
@@ -77,10 +90,9 @@ export async function syncFromGoogleSheet(targetDeckId: string): Promise<{
           content: noteContent as any,
         });
 
-        // 2. Create the Card (holds the FSRS math and links to the Note)
         await db.cards.put({
           id: cardId,
-          note: noteId, // Link to the note we just created
+          note: noteId,
           deck: targetDeckId,
           creationDate: new Date(),
           history: [],
@@ -99,7 +111,6 @@ export async function syncFromGoogleSheet(targetDeckId: string): Promise<{
 
         added++;
       } else {
-        // Update text edits from the Sheet without touching FSRS progress
         await db.notes.update(noteId, {
           sortField: front,
           content: noteContent as any,
