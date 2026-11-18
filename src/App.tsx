@@ -23,6 +23,7 @@ import { useLocalStorage } from "./lib/hooks/useLocalStorage";
 import { useMediaQuery } from "./lib/hooks/useMediaQuery";
 import { useDeckStatsCacheInit } from "./logic/deck/hooks/useDeckStatsCacheInit";
 import { useSetting } from "./logic/settings/hooks/useSetting";
+import { SyncButton } from './components/SyncButton';
 
 const BASE = "app-shell";
 
@@ -69,6 +70,7 @@ function AppContent() {
       <NotificationContainer />
       {registered ? (
         <div className={BASE}>
+          <SyncButton deckId="french-deck-1" />
           <Header
             menuOpened={sidebarMenuOpened}
             menuHandlers={sidebarHandlers}
