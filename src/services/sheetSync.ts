@@ -113,3 +113,49 @@ export async function syncFromGoogleSheet(): Promise<{
 
   return { added, updated };
 }
+
+// ============================================================================
+// NEW BACKUP FUNCTION
+// ============================================================================
+
+export async function backupToGoogleSheet(): Promise<number> {
+  // ⚠️ IMPORTANT: REPLACE THIS URL WITH YOUR DEPLOYED APPS SCRIPT URL!
+  const GAS_URL = "YOUR_WEB_APP_URL_HERE"; 
+  
+  // 1. Fetch all decks and all cards
+  const allDecks = await db.decks.toArray();
+  const allCards = await db.cards.toArray();
+  let totalCardsBackedUp = 0;
+
+  // 2. Loop through each deck one by one
+  for (const deck of allDecks) {
+    // Find only the cards that belong to this specific deck
+    const deckCards = allCards.filter(card => card.deck === deck.id);
+    
+    if (deckCards.length === 0) continue;
+
+    const payload = {
+      deckId: deck.id, // e.g., "french_vocab_deck"
+      cards: deckCards.map(c => ({
+        id: c.id,
+        model: c.model
+      }))
+    };
+
+    // 3. Send this deck's data to Google Sheets
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to backup deck: ${deck.id}`);
+      throw new Error(`Backup failed for ${deck.id}`);
+    }
+    
+    totalCardsBackedUp += deckCards.length;
+  }
+
+  return totalCardsBackedUp;
+}
