@@ -4,9 +4,7 @@ import { useSetting } from "@/logic/settings/hooks/useSetting";
 import {
   IconBolt,
   IconBraces,
-  IconCloud,
   IconDatabase,
-  IconInfoCircle,
   IconPalette,
   IconPencil,
   IconSettings,
@@ -15,9 +13,7 @@ import { t } from "i18next";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppHeaderContent } from "../shell/Header/Header";
-import AboutSettingsView from "./AboutSettingsView";
 import AppearanceSettingsView from "./AppearanceSettingsView";
-import CloudSettingsView from "./CloudSettingsView";
 import DatabaseSettingsView from "./DatabaseSettingsView/DatabaseSettingsView";
 import EditingSettingsView from "./EditingSettingsView/EditingSettingsView";
 import GeneralSettingsView from "./GeneralSettingsView";
@@ -76,14 +72,6 @@ export default function SettingsView() {
             <IconDatabase size={18} />
             {t("settings.database.title")}
           </Tabs.Tab>
-          <Tabs.Tab value="cloud">
-            <IconCloud size={18} />
-            {t("settings.cloud.title")}
-          </Tabs.Tab>
-          <Tabs.Tab value="about">
-            <IconInfoCircle size={18} />
-            {t("settings.about.title")}
-          </Tabs.Tab>
           {developerMode && (
             <Tabs.Tab value="developer">
               <IconBraces size={18} />
@@ -105,12 +93,6 @@ export default function SettingsView() {
         </Tabs.Panel>
         <Tabs.Panel value="database">
           <DatabaseSettingsView />
-        </Tabs.Panel>
-        <Tabs.Panel value="cloud">
-          <CloudSettingsView />
-        </Tabs.Panel>
-        <Tabs.Panel value="about">
-          <AboutSettingsView />
         </Tabs.Panel>
         <Tabs.Panel value="developer">
           {t("settings.developer.description")}
